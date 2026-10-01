@@ -106,3 +106,13 @@ justificación.
 10.
 11.
 12.
+
+## Integración de SAST Automático (GitHub Actions & CodeQL / SonarQube)
+
+- **SonarQube Cloud**: Integración exitosa mediante secreto `SONAR_TOKEN` y configuración en `sonar-project.properties`.
+- **GitHub CodeQL**: Análisis automático ejecutado en rama `main`.
+- **Alertas detectadas por CodeQL**:
+  1. **Critical** (`app/reporte_auditoria.py:51`): *Uncontrolled command line* (Inyección de Comandos).
+  2. **High** (`app/reporte_auditoria.py:42`): *SQL query built from user-controlled sources* (Inyección SQL).
+  3. **High** (`app/reporte_auditoria.py:57`): *Use of a broken or weak cryptographic hashing algorithm* (MD5).
+  4. **High** (`app/reporte_auditoria.py:62`): *Clear-text logging of sensitive information* (Fuga de logs).
