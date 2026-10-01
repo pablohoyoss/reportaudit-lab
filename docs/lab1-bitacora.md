@@ -1,8 +1,8 @@
 # Laboratorio 1 — Bitácora de auditoría de la cadena de suministro
 
-- **Autor/a:** ESCRIBE_AQUÍ_TU_NOMBRE_Y_APELLIDOS
-- **Repositorio:** https://github.com/TU-USUARIO/reportaudit-lab
-- **Sistema operativo y versión de Python usados:**
+- **Autor/a:** JOSE PABLO HOYOS DEL REY
+- **Repositorio:** https://github.com/pablohoyoss/reportaudit-lab
+- **Sistema operativo y versión de Python usados:** Ubuntu 24.04 LTS (WSL2), Python 3.12
 
 > Completa cada sección en el momento en que la guía te lo pide, no al final.
 > Una bitácora escrita "de memoria" al terminar no sirve como evidencia.
@@ -11,17 +11,26 @@
 
 ## Parte B — Auditoría manual (antes de usar ninguna herramienta)
 
+
 | # | Función | Línea | Qué sospechas | Dato de entrada (*source*) | Destino peligroso (*sink*) |
 |---|---|---|---|---|---|
-| 1 |  |  |  |  |  |
-| 2 |  |  |  |  |  |
-| 3 |  |  |  |  |  |
-| 4 |  |  |  |  |  |
-| 5 |  |  |  |  |  |
+| 1 | `buscar_reportes_cliente` | 42 | Inyección SQL: el nombre del cliente se concatena directamente en la consulta con `+`, sin parametrizar | Parámetro `cliente` (servicio.py, función `reportes`) | `cursor.execute(query)` |
+| 2 | `convertir_a_pdf` | 51 | Inyección de comandos: el nombre de archivo se concatena en un comando de shell ejecutado con `os.system` | Parámetro `archivo` (servicio.py, función `convertir`) | `os.system(comando)` |
+| 3 | `cargar_configuracion` | 26 | Deserialización insegura de YAML: usa `yaml.Loader` (cargador completo) en vez de `safe_load` | Contenido de `config.yaml` | `yaml.load(f, Loader=yaml.Loader)` |
+| 4 | `hash_password_legacy` | 57 | Hash débil: MD5 sin salt, vulnerable a fuerza bruta y tablas precalculadas | Parámetro `password` de la función | `hashlib.md5(password.encode()).hexdigest()` |
+| 5 | Constantes iniciales `NOTIFICATION_API_KEY` / `SMTP_PASSWORD` | 15-16 | Secretos expuestos: credenciales reales escritas en el código, ya en el historial de Git | — | Variables globales usadas en `notificar_cliente` |
 
 **Impacto en el negocio:** para cada sospecha, explica en una frase qué
 consecuencia tendría para ReportAudit y sus clientes si fuera real (qué datos,
 qué sistema o qué credencial quedarían expuestos).
+una inyección SQL permitiría leer o alterar los
+reportes de auditoría de cualquier cliente (H1). Una inyección de comandos
+daría control sobre el servidor donde corre ReportAudit (H2). Un YAML
+malicioso podría ejecutar código arbitrario si un atacante controlara
+`config.yaml` (H3). El hash MD5 dejaría las contraseñas de clientes
+expuestas ante una fuga de la base de datos (H4). Las credenciales escritas
+en el código permitirían a cualquiera con acceso al repositorio suplantar
+el servicio de notificaciones y enviar correos en su nombre (H5).
 
 ---
 
@@ -32,12 +41,12 @@ llegues a la parte correspondiente.
 
 | Hallazgo | Manual (B) | SonarQube for IDE sin conexión (D) | SonarQube for IDE en Connected Mode (E) | SonarQube Cloud (F) | CodeQL (F) | Semgrep (G) | Trivy (K) |
 |---|---|---|---|---|---|---|---|
-| H1 Inyección SQL en `buscar_reportes_cliente` |  |  |  |  |  |  | n/a |
-| H2 Inyección de comandos en `convertir_a_pdf` |  |  |  |  |  |  | n/a |
-| H3 Deserialización YAML insegura en `cargar_configuracion` |  |  |  |  |  |  | n/a |
-| H4 Hash MD5 en `hash_password_legacy` |  |  |  |  |  |  | n/a |
-| H5 Clave de API escrita en el código |  |  |  |  |  |  |  |
-| H6 Contraseña SMTP escrita en el código |  |  |  |  |  |  |  |
+| H1 Inyección SQL en `buscar_reportes_cliente` | ✓ | ✗ |  |  |  |  | n/a |
+| H2 Inyección de comandos en `convertir_a_pdf` | ✓ | ✗ |  |  |  |  | n/a |
+| H3 Deserialización YAML insegura en `cargar_configuracion` | ✓ | ✗ |  |  |  |  | n/a |
+| H4 Hash MD5 en `hash_password_legacy` | ✓ | ✓ (python:S4790) |  |  |  |  | n/a |
+| H5 Clave de API escrita en el código | ✓ | ✗ |  |  |  |  |  |
+| H6 Contraseña SMTP escrita en el código | ✓ | ✓ (python:S2068) |  |  |  |  |  |
 
 **Conclusión de la matriz** (Parte K): ¿alguna herramienta lo detectó todo? ¿Qué
 te dice eso sobre depender de una sola herramienta?
