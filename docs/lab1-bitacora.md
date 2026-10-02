@@ -116,3 +116,5 @@ justificación.
   2. **High** (`app/reporte_auditoria.py:42`): *SQL query built from user-controlled sources* (Inyección SQL).
   3. **High** (`app/reporte_auditoria.py:57`): *Use of a broken or weak cryptographic hashing algorithm* (MD5).
   4. **High** (`app/reporte_auditoria.py:62`): *Clear-text logging of sensitive information* (Fuga de logs).
+
+- **Prueba PR**: Verificación de triggers automáticos en Pull Request.
