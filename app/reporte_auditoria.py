@@ -30,7 +30,7 @@ def cargar_configuracion(ruta_config):
         # Ajuste hecho al actualizar a PyYAML 6: "yaml.load(f)" a secas
         # empezó a fallar con TypeError y se añadió el Loader para que
         # volviera a funcionar.
-        config = yaml.load(f, Loader=yaml.Loader)
+        config = yaml.safe_load(f)
     return config
 
 
@@ -54,7 +54,7 @@ def convertir_a_pdf(nombre_archivo):
 
 def hash_password_legacy(password):
     """Genera el hash de una contraseña para el sistema legado de clientes."""
-    return hashlib.md5(password.encode()).hexdigest()
+    return hashlib.sha256(password.encode()).hexdigest()
 
 
 def notificar_cliente(email, mensaje):
