@@ -54,7 +54,8 @@ def convertir_a_pdf(nombre_archivo):
 
 def hash_password_legacy(password):
     """Genera el hash de una contraseña para el sistema legado de clientes."""
-    return hashlib.sha256(password.encode()).hexdigest()
+    salt = b'reportaudit_legacy_salt'
+    return hashlib.pbkdf2_hmac('sha256', password.encode(), salt, 100000).hex()
 
 
 def notificar_cliente(email, mensaje):
