@@ -17,6 +17,8 @@ jobs:
   sonarqube-cloud:
     name: SAST - SonarQube Cloud
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
       - name: Descargar el código con todo su historial
         uses: actions/checkout@v6
@@ -53,6 +55,8 @@ jobs:
   sca-pip-audit:
     name: SCA - pip-audit
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
       - name: Descargar el código
         uses: actions/checkout@v6
@@ -70,6 +74,8 @@ jobs:
   secretos-gitleaks:
     name: Secretos - Gitleaks
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
       - name: Descargar el código con historial completo
         uses: actions/checkout@v6
@@ -79,5 +85,4 @@ jobs:
       - name: Ejecutar Gitleaks
         uses: gitleaks/gitleaks-action@v2
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GITLEAKS_CONFIG: .gitleaks.toml
