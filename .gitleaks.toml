@@ -1,0 +1,10 @@
+title = "Reglas de secretos para ReportAudit"
+
+[extend]
+useDefault = true
+
+[[rules]]
+id = "reportaudit-smtp-password"
+description = "Contraseña SMTP hardcodeada en ReportAudit"
+regex = '''SMTP_PASSWORD\s*=\s*["']([^"']+)["']'''
+keywords = ["SMTP_PASSWORD"]

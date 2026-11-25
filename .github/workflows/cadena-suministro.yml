@@ -17,6 +17,8 @@ jobs:
   sonarqube-cloud:
     name: SAST - SonarQube Cloud
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
       - name: Descargar el código con todo su historial
         uses: actions/checkout@v6
@@ -49,3 +51,46 @@ jobs:
         uses: github/codeql-action/analyze@v4
         with:
           category: "/language:python"
+
+  sca-pip-audit:
+    name: SCA - pip-audit
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Descargar el código
+        uses: actions/checkout@v6
+
+      - name: Configurar Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Instalar pip-audit y auditar dependencias
+        run: |
+          python -m pip install --upgrade pip pip-audit
+          pip-audit -r requirements.txt
+
+  secretos-gitleaks:
+    name: Secretos - Gitleaks
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Descargar el código con historial completo
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Instalar Gitleaks v8.30.1 verificando SHA-256 y escanear
+        run: |
+          GITLEAKS_VERSION=8.30.1
+          BASE="https://github.com/gitleaks/gitleaks/releases/download/v${GITLEAKS_VERSION}"
+          PAQUETE="gitleaks_${GITLEAKS_VERSION}_linux_x64.tar.gz"
+          TMP=$(mktemp -d)
+          curl -sSL -o "$TMP/$PAQUETE" "$BASE/$PAQUETE"
+          curl -sSL -o "$TMP/sumas.txt" "$BASE/gitleaks_${GITLEAKS_VERSION}_checksums.txt"
+          (cd "$TMP" && grep " $PAQUETE$" sumas.txt | sha256sum -c -)
+          tar -xzf "$TMP/$PAQUETE" -C "$TMP" gitleaks
+          "$TMP/gitleaks" git . -c .gitleaks.toml -v --redact
+          rm -rf "$TMP"

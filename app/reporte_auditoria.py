@@ -18,8 +18,8 @@ import sqlite3
 import yaml
 
 # --- Configuración "temporal" mientras se decide el gestor de secretos ---
-NOTIFICATION_API_KEY = "Rq7Hx2Lm9Xc4Vb8Nz1Kd6Fs3Tg5Wy0Pj2Re4UaBt"
-SMTP_PASSWORD = "R3port2024!Audit"
+NOTIFICATION_API_KEY = os.environ.get("NOTIFICATION_API_KEY", "")
+SMTP_PASSWORD = os.environ.get("SMTP_PASSWORD", "")
 
 RUTA_DB = os.path.join(os.path.dirname(__file__), "..", "reportes.db")
 
@@ -66,5 +66,5 @@ def hash_password_legacy(password):
 
 def notificar_cliente(email, mensaje):
     """Envía una notificación al cliente usando el servicio externo."""
-    print(f"[NotifyAPI key={NOTIFICATION_API_KEY[:6]}...] -> {email}: {mensaje}")
+    print(f"[NotifyAPI configurado={bool(NOTIFICATION_API_KEY)}] -> {email}: {mensaje}")
     return True
