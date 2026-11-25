@@ -118,3 +118,113 @@ justificación.
   4. **High** (`app/reporte_auditoria.py:62`): *Clear-text logging of sensitive information* (Fuga de logs).
 
 - **Prueba PR**: Verificación de triggers automáticos en Pull Request.
+---
+
+## Bloque final — Publicar y demostrar (Partes O–T)
+
+### O. Secretos en el historial (Gitleaks)
+
+| Escaneo | Comando | N.º de hallazgos | Commit(s) donde aparecen |
+|---|---|---|---|
+| Código actual, reglas por defecto | `gitleaks dir app` | 0 (tras sustituir las constantes en `app/reporte_auditoria.py` por `os.environ.get(...)`) | — (código limpio en árbol de trabajo) |
+| Historial, reglas por defecto | `gitleaks git .` | 1 (`generic-api-key` en `app/reporte_auditoria.py:21`) | `be586678` |
+| Historial, con regla propia | `gitleaks git . -c .gitleaks.toml` | 2 (`generic-api-key` en L21 y `reportaudit-smtp-password` en L22) | `be586678` |
+| Historial, tras .gitleaksignore | `gitleaks git . -c .gitleaks.toml` | 0 (fingerprints históricos aceptados tras rotación) | — (ignorados explícitamente) |
+
+- **¿Por qué el código actual está limpio y el historial no?** Porque Git almacena cada commit como un objeto inmutable; eliminar una credencial en un commit posterior modifica únicamente la foto actual (`HEAD`), pero los objetos del commit inicial (`be586678`) permanecen íntegros y accesibles mediante `git log -p` o herramientas de escaneo de historial.
+- **¿Qué medida de la Parte M cierra el riesgo y cuál no lo cierra?**
+  - **Cierra el riesgo:** Revocar y rotar inmediatamente las credenciales expuestas (`NOTIFICATION_API_KEY` y `SMTP_PASSWORD`) en sus respectivos servicios externos e inyectarlas mediante variables de entorno/secretos del entorno de ejecución, junto con el escaneo preventivo de Gitleaks en CI/PR para bloquear futuras fugas.
+  - **No cierra el riesgo por sí sola:** Limitarse a borrar los secretos del código fuente en un nuevo commit o añadir sus hashes a `.gitleaksignore` sin rotarlas (ya que los valores antiguos siguen visibles en el historial Git y continúan siendo válidos si no se invalidan en origen).
+
+### P. Puertas obligatorias en main
+
+| Check | ¿Exigido en main? | Resultado en el PR de prueba (test/puerta-sca) |
+|---|---|---|
+| SAST - SonarQube Cloud | | |
+| SAST - CodeQL | | |
+| SCA - pip-audit | | |
+| Secretos - Gitleaks | | |
+
+### Q. Divulgación coordinada (simulacro)
+
+- Informe recibido de (usuario de GitHub):
+- Identificador del borrador de aviso (GHSA-…):
+- Severidad y vector CVSS:
+- CWE:
+- Versiones afectadas / versión corregida:
+
+### R. Versión 1.0.0 verificable
+
+| Comprobación | Comando | Resultado |
+|---|---|---|
+| Huellas SHA-256 | `sha256sum -c SHA256SUMS` | |
+| Procedencia (SLSA) | `gh attestation verify reportaudit-1.0.0.tar.gz --repo …` | |
+| SBOM atestado | `gh attestation verify … --predicate-type https://cyclonedx.org/bom` | |
+| Archivo alterado | `gh attestation verify alterado.tar.gz --repo …` | |
+
+### S. Madurez (OpenSSF Scorecard)
+
+| Check | Puntuación (0–10) | Qué la explica |
+|---|---|---|
+| Puntuación global | | |
+| | | |
+| | | |
+| | | |
+
+### T. Expediente de evidencias
+
+Ver `docs/cra/expediente-evidencias.md`. Compara el expediente con tu respuesta B5 de la Práctica 2: ¿qué evidencia imaginaste que ahora existe de verdad, y cuál sigue sin existir?
+
+---
+
+## Bloque final — Publicar y demostrar (Partes O–T)
+
+### O. Secretos en el historial (Gitleaks)
+
+| Escaneo | Comando | N.º de hallazgos | Commit(s) donde aparecen |
+|---|---|---|---|
+| Código actual, reglas por defecto | `gitleaks dir app` | | |
+| Historial, reglas por defecto | `gitleaks git .` | | |
+| Historial, con regla propia | `gitleaks git . -c .gitleaks.toml` | | |
+| Historial, tras .gitleaksignore | `gitleaks git . -c .gitleaks.toml` | | |
+
+¿Por qué el código actual está limpio y el historial no? ¿Qué medida de la Parte M cierra el riesgo y cuál no lo cierra?
+
+### P. Puertas obligatorias en main
+
+| Check | ¿Exigido en main? | Resultado en el PR de prueba (test/puerta-sca) |
+|---|---|---|
+| SAST - SonarQube Cloud | | |
+| SAST - CodeQL | | |
+| SCA - pip-audit | | |
+| Secretos - Gitleaks | | |
+
+### Q. Divulgación coordinada (simulacro)
+
+- Informe recibido de (usuario de GitHub):
+- Identificador del borrador de aviso (GHSA-…):
+- Severidad y vector CVSS:
+- CWE:
+- Versiones afectadas / versión corregida:
+
+### R. Versión 1.0.0 verificable
+
+| Comprobación | Comando | Resultado |
+|---|---|---|
+| Huellas SHA-256 | `sha256sum -c SHA256SUMS` | |
+| Procedencia (SLSA) | `gh attestation verify reportaudit-1.0.0.tar.gz --repo …` | |
+| SBOM atestado | `gh attestation verify … --predicate-type https://cyclonedx.org/bom` | |
+| Archivo alterado | `gh attestation verify alterado.tar.gz --repo …` | |
+
+### S. Madurez (OpenSSF Scorecard)
+
+| Check | Puntuación (0–10) | Qué la explica |
+|---|---|---|
+| Puntuación global | | |
+| | | |
+| | | |
+| | | |
+
+### T. Expediente de evidencias
+
+Ver `docs/cra/expediente-evidencias.md`. Compara el expediente con tu respuesta B5 de la Práctica 2: ¿qué evidencia imaginaste que ahora existe de verdad, y cuál sigue sin existir?
