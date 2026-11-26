@@ -63,11 +63,9 @@ jobs:
         with:
           python-version: "3.12"
       - name: Auditar las dependencias con pip-audit
-        uses: pypa/gh-action-pip-audit@v1.1.0
-        with:
-          inputs: requirements.txt
-          no-deps: true
-          disable-pip: true
+        run: |
+          python -m pip install pip-audit==2.10.1
+          pip-audit -r requirements.txt --no-deps --disable-pip
 
   secretos-gitleaks:
     name: Secretos - Gitleaks
