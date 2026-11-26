@@ -16,12 +16,17 @@ import os
 import sqlite3
 
 import yaml
+import re
+import subprocess
+from pathlib import Path
 
 # --- Configuración "temporal" mientras se decide el gestor de secretos ---
-NOTIFICATION_API_KEY = os.environ.get("NOTIFICATION_API_KEY", "")
-SMTP_PASSWORD = os.environ.get("SMTP_PASSWORD", "")
+NOTIFICATION_API_KEY = os.environ.get("REPORTAUDIT_NOTIFICATION_API_KEY", "")
+SMTP_PASSWORD = os.environ.get("REPORTAUDIT_SMTP_PASSWORD", "")
 
 RUTA_DB = os.path.join(os.path.dirname(__file__), "..", "reportes.db")
+
+NOMBRE_HTML_VALIDO = re.compile(r"^[A-Za-z0-9_][A-Za-z0-9_.-]*\.html$")
 
 
 def cargar_configuracion(ruta_config):
@@ -38,8 +43,8 @@ def buscar_reportes_cliente(nombre_cliente, ruta_db=RUTA_DB):
     """Devuelve todos los reportes asociados a un cliente."""
     conexion = sqlite3.connect(ruta_db)
     cursor = conexion.cursor()
-    query = "SELECT * FROM reportes WHERE cliente = '" + nombre_cliente + "'"
-    cursor.execute(query)
+    query = "SELECT * FROM reportes WHERE cliente = ?"
+    cursor.execute(query, (nombre_cliente,))
     resultados = cursor.fetchall()
     conexion.close()
     return resultados
@@ -47,9 +52,14 @@ def buscar_reportes_cliente(nombre_cliente, ruta_db=RUTA_DB):
 
 def convertir_a_pdf(nombre_archivo):
     """Convierte un reporte HTML a PDF usando la utilidad del sistema."""
-    comando = "wkhtmltopdf " + nombre_archivo + " " + nombre_archivo + ".pdf"
-    os.system(comando)
-    return nombre_archivo + ".pdf"
+    if not NOMBRE_HTML_VALIDO.match(Path(nombre_archivo).name):
+        raise ValueError("Nombre de archivo no válido")
+    salida = nombre_archivo + ".pdf"
+    try:
+        subprocess.run(["wkhtmltopdf", nombre_archivo, salida], check=False)
+    except FileNotFoundError:
+        print("Aviso: wkhtmltopdf no está instalado; no se generó el PDF.")
+    return salida
 
 
 def hash_password_legacy(password):
