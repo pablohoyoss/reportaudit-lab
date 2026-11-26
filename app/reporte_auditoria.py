@@ -18,7 +18,6 @@ import sqlite3
 import yaml
 import re
 import subprocess
-from pathlib import Path
 
 # --- Configuración "temporal" mientras se decide el gestor de secretos ---
 NOTIFICATION_API_KEY = os.environ.get("REPORTAUDIT_NOTIFICATION_API_KEY", "")
@@ -52,7 +51,7 @@ def buscar_reportes_cliente(nombre_cliente, ruta_db=RUTA_DB):
 
 def convertir_a_pdf(nombre_archivo):
     """Convierte un reporte HTML a PDF usando la utilidad del sistema."""
-    if not NOMBRE_HTML_VALIDO.match(Path(nombre_archivo).name):
+    if not NOMBRE_HTML_VALIDO.fullmatch(nombre_archivo):
         raise ValueError("Nombre de archivo no válido")
     salida = nombre_archivo + ".pdf"
     try:
