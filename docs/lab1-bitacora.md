@@ -162,8 +162,16 @@ justificación.
 
 **13.** Una alerta de Dependabot es un aviso (y, a veces, un PR con la corrección), pero no impide nada: se puede fusionar un PR con una dependencia vulnerable. SCA - pip-audit es un check obligatorio de main: si el PR introduce una dependencia con una vulnerabilidad conocida, el check falla y el PR no puede entrar. Lo comprobé con el PR de prueba test/puerta-sca (werkzeug 3.0.1), que quedó en rojo y se cerró sin fusionar.
 
+**14.** Demuestra que reportaudit-1.0.0.tar.gz lo construyó el workflow publicar-version.yml de mi repositorio a partir de la etiqueta v1.0.0, y que nadie lo ha modificado después (la copia alterada falla). No demuestra que el código sea seguro ni que el workflow no esté comprometido: solo dice la verdad sobre quién y desde dónde lo construyó. SHA256SUMS no basta porque está en la misma Release: quien sustituya el paquete puede sustituir también las huellas; la firma Sigstore, en cambio, va ligada a la identidad del workflow y queda en un registro público.
+
 **15.** Un Issue es público: publicaría la vulnerabilidad y cómo explotarla antes de que exista el parche, y cualquier atacante podría usarla contra quien tenga la versión afectada. El canal privado (private vulnerability reporting) permite que solo el responsable y el investigador vean el informe mientras se prepara la corrección. SECURITY.md declara públicamente ese canal, los plazos de respuesta (3 y 10 días hábiles, divulgación en 90 días), el período de soporte (hasta 2031-10-31, 5 años como exige la CRA) y la garantía de no emprender acciones legales contra investigadores de buena fe.
 
+
+
+**16.** No es un problema de seguridad: Maintained mide la actividad de los últimos 90 días, y ReportAudit tiene menos de 90 días de vida. El 0 dice que el proyecto es nuevo, no que sea inseguro. Enseña que una métrica mide una práctica concreta, no la seguridad real: antes de juzgar una puntuación hay que leer qué comprueba y por qué sale así (igual que el -1 de Branch-Protection, que es un límite del token y no una falta de protección).
+
+
+**17.** En la B5 de la P2 imaginé, para cada requisito del Anexo I, una práctica y una evidencia. Ahora existen de verdad: SAST y SCA bloqueantes en cada PR (I.2.a), con Grype en 0 y un VEX; secretos fuera del código y una regla propia de Gitleaks (I.2.b); el SBOM CycloneDX en cada release (II.1), que además está atestado y es más de lo que imaginé; Dependabot y una release firmada (II.2 y II.7), aunque con las atestaciones de GitHub (Sigstore) en lugar de cosign; y SECURITY.md con canal privado, plazos y contacto (II.5). Lo que sigue sin existir: el test de despliegue limpio y el checklist de hardening (I.2.b), el análisis dinámico con ZAP y los tests automáticos (I.2.j), y un advisory publicado (solo hay un borrador del simulacro). Y fuera del código, la evaluación de riesgos, la documentación técnica del Anexo VII, la declaración UE de conformidad y el marcado CE.
 
 ---
 
@@ -194,31 +202,39 @@ justificación.
 
 ### Q. Divulgación coordinada (simulacro)
 
-- Informe recibido de (usuario de GitHub):
-- Identificador del borrador de aviso (GHSA-…):
-- Severidad y vector CVSS:
-- CWE:
-- Versiones afectadas / versión corregida:
+- Informe recibido de (usuario de GitHub): PabloVip
+- Identificador del borrador de aviso (GHSA-…): GHSA-jq8p-4q7x-2pvx
+- Severidad y vector CVSS: 7.5 High, CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:N/A:N
+- CWE: CWE-89 (SQL Injection)
+- Versiones afectadas / versión corregida: < 1.0.0 / 1.0.0
 
 ### R. Versión 1.0.0 verificable
 
 | Comprobación | Comando | Resultado |
 |---|---|---|
-| Huellas SHA-256 | `sha256sum -c SHA256SUMS` | |
-| Procedencia (SLSA) | `gh attestation verify reportaudit-1.0.0.tar.gz --repo …` | |
-| SBOM atestado | `gh attestation verify … --predicate-type https://cyclonedx.org/bom` | |
-| Archivo alterado | `gh attestation verify alterado.tar.gz --repo …` | |
+| Huellas SHA-256 | `sha256sum -c SHA256SUMS` | OK en `reportaudit-1.0.0.tar.gz` y `reportaudit-sbom.cdx.json` |
+| Procedencia (SLSA) | `gh attestation verify reportaudit-1.0.0.tar.gz --repo …` | ✓ Verification succeeded: `publicar-version.yml@refs/tags/v1.0.0`, predicado `slsa.dev/provenance/v1` |
+| SBOM atestado | `gh attestation verify … --predicate-type https://cyclonedx.org/bom` | ✓ Verification succeeded, predicado `cyclonedx.org/bom` |
+| Archivo alterado | `gh attestation verify alterado.tar.gz --repo …` | ✗ Falla: huella distinta (`2585914e…` frente a `a59a9c3e…`) y no existe ninguna atestación firmada para ella (HTTP 404) |
+
+> Las huellas detectan una descarga incompleta o corrupta, pero no a un atacante que cambie a la vez el archivo y SHA256SUMS. La procedencia detecta cualquier archivo que no haya construido mi workflow desde mi repositorio y la etiqueta v1.0.0, aunque se hayan cambiado las huellas, porque la firma Sigstore no se puede falsificar. El SBOM atestado demuestra que ese SBOM describe exactamente ese paquete. Ninguna detecta código malicioso o vulnerable que entre por un PR aprobado: el workflow lo firmaría como legítimo. Eso lo cubren las revisiones y los checks de cada PR.
 
 ### S. Madurez (OpenSSF Scorecard)
 
 | Check | Puntuación (0–10) | Qué la explica |
 |---|---|---|
-| Puntuación global | | |
-| | | |
-| | | |
-| | | |
+| Puntuación global | 7.1 | 10 en Code-Review, Security-Policy, SAST, Vulnerabilities y Token-Permissions; 8 en Signed-Releases |
+| Maintained | 0 | El repositorio tiene menos de 90 días: mide antigüedad y actividad, no seguridad |
+| Pinned-Dependencies | 0 | Las acciones se fijan por etiqueta (@v6) y no por hash de commit (reto opcional S.3) |
+| License | 0 | No hay archivo LICENSE: es un proyecto de la asignatura |
+| CII-Best-Practices | 0 | No se ha solicitado la insignia OpenSSF Best Practices |
+| Fuzzing | 0 | No hay pruebas de fuzzing |
+
+> Branch-Protection sale -1: con reglas clásicas, Scorecard necesita un token de administrador para leerlas, aunque main exige PR, una aprobación y los 4 checks. Signed-Releases da 8 porque reconoce los .sigstore.json de la v1.0.0. El check más útil para elegir una dependencia es Code-Review junto con Vulnerabilities; el más engañoso sin contexto es Maintained, que penaliza a un proyecto nuevo aunque esté bien cuidado.
 
 ### T. Expediente de evidencias
 
 Ver `docs/cra/expediente-evidencias.md`. Compara el expediente con tu respuesta B5 de la Práctica 2: ¿qué evidencia imaginaste que ahora existe de verdad, y cuál sigue sin existir?
+
+> En la B5 de la P2 imaginé, para cada requisito del Anexo I, una práctica y una evidencia. Ahora existen de verdad: SAST y SCA bloqueantes en cada PR (I.2.a), con Grype en 0 y un VEX; secretos fuera del código y una regla propia de Gitleaks (I.2.b); el SBOM CycloneDX en cada release (II.1), que además está atestado y es más de lo que imaginé; Dependabot y una release firmada (II.2 y II.7), aunque con las atestaciones de GitHub (Sigstore) en lugar de cosign; y SECURITY.md con canal privado, plazos y contacto (II.5). Lo que sigue sin existir: el test de despliegue limpio y el checklist de hardening (I.2.b), el análisis dinámico con ZAP y los tests automáticos (I.2.j), y un advisory publicado (solo hay un borrador del simulacro). Y fuera del código, la evaluación de riesgos, la documentación técnica del Anexo VII, la declaración UE de conformidad y el marcado CE.
 
