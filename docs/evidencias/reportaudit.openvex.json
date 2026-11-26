@@ -1,16 +1,16 @@
 {
   "@context": "https://openvex.dev/ns/v0.2.0",
-  "@id": "https://github.com/TU-USUARIO/reportaudit-lab/vex/2026-001",
-  "author": "Nombre Apellido <tu-correo@ejemplo.com>",
-  "timestamp": "2026-10-01T10:00:00Z",
+  "@id": "https://github.com/pablohoyoss/reportaudit-lab/vex/2026-001",
+  "author": "Jose Pablo Hoyos del Rey <pablohoyoss@users.noreply.github.com>",
+  "timestamp": "2026-11-26T15:00:00Z",
   "version": 1,
   "statements": [
     {
-      "vulnerability": { "name": "CVE-XXXX-XXXXX" },
-      "products": [ { "@id": "pkg:pypi/paquete@version" } ],
+      "vulnerability": { "name": "CVE-2024-34069" },
+      "products": [ { "@id": "pkg:pypi/werkzeug@3.0.1" } ],
       "status": "not_affected",
       "justification": "vulnerable_code_not_in_execute_path",
-      "impact_statement": "Explica aquí, con evidencia del código, por qué la vulnerabilidad no es explotable en ReportAudit."
+      "impact_statement": "The vulnerability requires the Werkzeug interactive debugger. ReportAudit starts the service in app/servicio.py line 64 with debug=False, so the debugger is never loaded. The dependency was upgraded anyway."
     }
   ]
 }
